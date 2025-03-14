@@ -1,0 +1,29 @@
+name: Deploy AI-YouTube-Assistant
+
+on:  
+  push:  
+    branches:  
+      - main  # Runs the workflow when you push to the main branch  
+  schedule:
+    - cron: "0 * * * *"  # Runs every hour (modify as needed)
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository  
+        uses: actions/checkout@v4  
+
+      - name: Set Up Python  
+        uses: actions/setup-python@v4  
+        with:  
+          python-version: '3.12'  
+
+      - name: Install Dependencies  
+        run: |  
+          pip install -r requirements.txt  
+
+      - name: Run the Bot  
+        run: |  
+          python main.py
