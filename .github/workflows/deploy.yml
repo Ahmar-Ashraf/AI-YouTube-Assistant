@@ -1,4 +1,4 @@
-name: Deploy Flask App to Render
+name: Run Flask App on GitHub
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  deploy:
+  run-flask:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,6 +23,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install --no-cache-dir -r requirements.txt
 
-    - name: Trigger Render Deploy Hook
+    - name: Run Flask App
       run: |
-        curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
+        export FLASK_APP=app.py
+        flask run --host=0.0.0.0 --port=8080
