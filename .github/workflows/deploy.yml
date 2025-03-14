@@ -1,4 +1,4 @@
-name: Deploy Flask App
+name: Deploy Flask App to Render
 
 on:
   push:
@@ -23,8 +23,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install --no-cache-dir -r requirements.txt
 
-    - name: Run Flask App
-      env:
-        PORT: 5000  # Ensures PORT is always set
-        FLASK_ENV: production
-     run: gunicorn --bind 0.0.0.0:5000 app:app --workers 2 --log-file - &
+    - name: Trigger Render Deploy Hook
+      run: |
+        curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
