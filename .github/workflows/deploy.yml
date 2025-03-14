@@ -3,8 +3,7 @@ name: Deploy Flask App
 on:
   push:
     branches:
-      - main  # Change if your default branch is different
-  workflow_dispatch:  # Allows manual triggering
+      - main
 
 jobs:
   deploy:
@@ -17,12 +16,12 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.9'  # Use a compatible version
+        python-version: 3.9
 
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run the Flask App
-      run: python app.py
+    - name: Run Flask App
+      run: gunicorn -w 4 -b 0.0.0.0:$PORT app:app
