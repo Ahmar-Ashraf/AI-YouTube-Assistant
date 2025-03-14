@@ -9,4 +9,4 @@ moviepy
 ffmpeg-python
 gtts
 python-telegram-bot
-twilio
+twilion                                    gunicorn
