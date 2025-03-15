@@ -19,11 +19,6 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      - name: Start Flask server
-        run: |
-          export FLASK_APP=app.py
-          nohup flask run --host=0.0.0.0 --port=8080 &
-
       - name: Install ngrok
         run: |
           curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
@@ -31,13 +26,32 @@ jobs:
           sudo apt update && sudo apt install ngrok
 
       - name: Authenticate ngrok
-        run: ngrok config add-authtoken 2uLY03Avj54fHduBQiAYaHgQezB_M87DAeas9NYJtrBAtvDw
+        run: ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
+
+      - name: Start Flask app
+        run: |
+          export FLASK_APP=app.py
+          nohup flask run --host=0.0.0.0 --port=8080 > flask.log 2>&1 &
+          sleep 5  # Wait to ensure Flask is running
 
       - name: Start ngrok
         run: |
-          nohup ngrok http 8080 &
-          sleep 10
+          nohup ngrok http 8080 > ngrok.log 2>&1 &
+          sleep 10  # Wait for ngrok to establish connection
 
-      - name: Get ngrok URL
+      - name: Get and store ngrok URL
         run: |
-          curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url'
+          NGROK_URL=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url')
+          echo "Ngrok URL: $NGROK_URL"
+          echo "NGROK_URL=$NGROK_URL" >> $GITHUB_ENV
+
+      - name: Output ngrok URL
+        run: echo "Your Flask app is available at: ${{ env.NGROK_URL }}"
+
+      - name: Debug Logs
+        if: failure()
+        run: |
+          echo "Flask Logs:"
+          cat flask.log
+          echo "Ngrok Logs:"
+          cat ngrok.log
