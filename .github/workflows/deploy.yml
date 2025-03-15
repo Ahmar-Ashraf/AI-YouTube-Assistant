@@ -1,66 +1,60 @@
-name: Deploy Flask App with Ngrok
+name: Deploy Flask with Ngrok
 
-on:
-  push:
-    branches:
-      - main  # Change this if you're using a different branch
-  workflow_dispatch:  # Allows manual trigger
+on: [push]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v3
-      with:
-        python-version: '3.9'
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.9"
 
-    - name: Install Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
 
-    - name: Install jq (for JSON processing)
-      run: sudo apt-get install jq -y
+      - name: Install jq (for JSON processing)
+        run: sudo apt-get install jq -y
 
-    - name: Install Ngrok
-      run: |
-        curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
-        echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
-        sudo apt update && sudo apt install ngrok -y
+      - name: Install Ngrok
+        run: |
+          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
+          echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
+          sudo apt update && sudo apt install ngrok -y
 
-    - name: Authenticate Ngrok
-      run: |
-        ngrok config add-authtoken 2uLY03Avj54fHduBQiAYaHgQezB_M87DAeas9NYJtrBAtvDw
+      - name: Authenticate Ngrok
+        run: ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
 
-    - name: Start Flask App
-      run: |
-        export FLASK_APP=app.py
-        nohup flask run --host=0.0.0.0 --port=8080 > flask.log 2>&1 &
-        sleep 5  # Ensures Flask starts before Ngrok
+      - name: Start Flask App
+        run: |
+          export FLASK_APP=app.py
+          nohup flask run --host=0.0.0.0 --port=8080 > flask.log 2>&1 &
+          sleep 5  # Ensure Flask starts before Ngrok
 
-    - name: Start Ngrok
-      run: |
-        nohup ngrok http 8080 > ngrok.log 2>&1 &
-        sleep 10  # Wait for Ngrok to establish a connection
+      - name: Start Ngrok
+        run: |
+          nohup ngrok http 8080 > ngrok.log 2>&1 &
+          sleep 10  # Wait for Ngrok to establish a connection
 
-    - name: Get and Store Ngrok URL
-      run: |
-        NGROK_URL=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url')
-        echo "Ngrok URL: $NGROK_URL"
-        echo "NGROK_URL=$NGROK_URL" >> $GITHUB_ENV
+      - name: Get and Store Ngrok URL
+        run: |
+          NGROK_URL=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url')
+          echo "Ngrok URL: $NGROK_URL"
+          echo "NGROK_URL=$NGROK_URL" >> $GITHUB_ENV
 
-    - name: Output Ngrok URL
-      run: echo "Your Flask app is available at: ${{ env.NGROK_URL }}"
+      - name: Output Ngrok URL
+        run: echo "Your Flask app is available at: ${{ env.NGROK_URL }}"
 
-    - name: Debug Logs (If Failure)
-      if: failure()
-      run: |
-        echo "Flask Logs:"
-        cat flask.log
-        echo "Ngrok Logs:"
-        cat ngrok.log
+      - name: Debug Logs (If Failure)
+        if: failure()
+        run: |
+          echo "Flask Logs:"
+          cat flask.log
+          echo "Ngrok Logs:"
+          cat ngrok.log
