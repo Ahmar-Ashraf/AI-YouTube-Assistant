@@ -10,3 +10,9 @@ ffmpeg-python==0.2.0
 gtts==2.4.0
 python-telegram-bot==20.8
 twilio==8.10.0
+
+# Potential extras
+requests==2.31.0
+Flask-Cors==4.0.0
+pytube==12.1.0
+numpy==1.23.0
